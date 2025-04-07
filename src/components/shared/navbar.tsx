@@ -84,7 +84,7 @@ export const Navbar = () => {
           {/* Sign in button (placeholder for now) */}
           <div className="hidden md:flex items-center">
             <Button asChild variant="secondary" size="sm" className="rounded-full px-4 py-1.5 text-sm">
-              <Link href="/signin">Sign in</Link>
+              <Link href="/auth/login">Sign in</Link>
             </Button>
           </div>
           
@@ -166,7 +166,7 @@ export const Navbar = () => {
                         asChild 
                         className="w-full h-11 rounded-lg text-base font-medium"
                       >
-                        <Link href="/signin">Sign in</Link>
+                        <Link href="/auth/login">Sign in</Link>
                       </Button>
                     </div>
                   </div>
