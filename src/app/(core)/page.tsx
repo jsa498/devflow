@@ -78,7 +78,7 @@ export default function Home() {
               <div className="mt-10 flex flex-row gap-4 justify-center px-4">
                 <Link href="/products" passHref>
                   <RainbowButton
-                    className="flex-1 max-w-[200px] text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 rounded-xl transition-transform hover:scale-105"
+                    className="flex-1 max-w-[200px] text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 rounded-xl transition-transform hover:scale-105 whitespace-nowrap"
                   >
                     View Products
                   </RainbowButton>
@@ -95,13 +95,13 @@ export default function Home() {
               {/* Decorative elements */}
               <div className="absolute inset-0 -z-10 overflow-hidden">
                 {/* Main gradient blob with improved gradient spread and opacity transition */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1200px] opacity-20 dark:opacity-10">
-                  <div className="absolute inset-0 rounded-[50%] bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 blur-[64px]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1200px] opacity-25 dark:opacity-15">
+                  <div className="absolute inset-0 rounded-[50%] bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 blur-[96px]" />
                 </div>
                 {/* Top fade gradient */}
-                <div className="absolute top-0 left-0 right-0 h-[150px] bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+                <div className="absolute top-0 left-0 right-0 h-[350px] bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
                 {/* Bottom fade gradient */}
-                <div className="absolute bottom-0 left-0 right-0 h-[150px] bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+                <div className="absolute bottom-0 left-0 right-0 h-[350px] bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
                 {/* Improved radial gradient overlay */}
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,rgba(var(--primary-rgb),0.05)_0%,transparent_70%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
               </div>
