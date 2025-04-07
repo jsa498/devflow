@@ -5,7 +5,7 @@ import Image from 'next/image'; // Import next/image
 import { useTheme } from 'next-themes'; // Assuming next-themes based on theme-provider pattern
 import { TrendingUp, ShoppingBag, BookOpen, ArrowRight } from 'lucide-react';
 import { RainbowButton } from '@/components/ui/rainbow-button'; // Updated path
-import { Card, CardContent, CardDescription } from "@/components/ui/card"; // Import Card components
+import { Card, CardDescription } from "@/components/ui/card"; // Import Card components
 import { Button } from "@/components/ui/button"; // Import Button
 import {
   Carousel,
