@@ -8,21 +8,6 @@ import { VideoPlayer } from "@/components/ui/video-player";
 
 export const revalidate = 3600; // Revalidate this page every hour
 
-// Define the Course interface based on database schema
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  slug: string;
-  price: number;
-  image_url: string | null;
-  thumbnail_image_url: string | null;
-  video_url: string | null;
-  what_youll_get: string[];
-  created_at: string;
-  is_published: boolean;
-}
-
 export default async function CourseDetailPage({ params }: { params: { slug: string } }) {
   // Await params before using its properties
   const resolvedParams = await params;
