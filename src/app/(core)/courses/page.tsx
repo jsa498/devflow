@@ -13,6 +13,8 @@ interface Course {
   slug: string;
   price: number;
   image_url: string | null;
+  thumbnail_image_url: string | null;
+  video_url: string | null;
   what_youll_get: string[];
   created_at: string;
 }
@@ -73,11 +75,11 @@ export default async function CoursesPage() {
           {courses && courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {courses.map((course: Course) => (
-                <Card key={course.id} className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 h-full flex flex-col">
-                  {course.image_url ? (
-                    <div className="w-full h-52 relative bg-black overflow-hidden">
+                <Card key={course.id} className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 h-full flex flex-col p-0">
+                  {course.thumbnail_image_url || course.image_url ? (
+                    <div className="w-full h-64 relative bg-black overflow-hidden rounded-t-2xl">
                       <Image
-                        src={course.image_url}
+                        src={course.thumbnail_image_url || course.image_url || ''}
                         alt={course.title}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -85,7 +87,7 @@ export default async function CoursesPage() {
                       />
                     </div>
                   ) : (
-                    <div className="h-52 w-full flex items-center justify-center bg-muted group-hover:bg-muted/80 transition-colors">
+                    <div className="h-64 w-full flex items-center justify-center bg-muted group-hover:bg-muted/80 transition-colors rounded-t-2xl">
                       <svg
                         className="h-16 w-16 text-muted-foreground/50"
                         fill="none"

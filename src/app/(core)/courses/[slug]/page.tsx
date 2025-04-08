@@ -4,8 +4,24 @@ import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from "@/components/ui/button";
+import { VideoPlayer } from "@/components/ui/video-player";
 
 export const revalidate = 3600; // Revalidate this page every hour
+
+// Define the Course interface based on database schema
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  slug: string;
+  price: number;
+  image_url: string | null;
+  thumbnail_image_url: string | null;
+  video_url: string | null;
+  what_youll_get: string[];
+  created_at: string;
+  is_published: boolean;
+}
 
 export default async function CourseDetailPage({ params }: { params: { slug: string } }) {
   // Await params before using its properties
@@ -52,8 +68,16 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
               {course.title}
             </h1>
             
-            {/* Course Image */}
-            {course.image_url ? (
+            {/* Course Video or Image */}
+            {course.video_url ? (
+              <div className="w-full h-[300px] md:h-[400px] relative mb-8 rounded-xl overflow-hidden">
+                <VideoPlayer 
+                  src={course.video_url}
+                  poster={course.thumbnail_image_url || course.image_url || undefined}
+                  className="w-full h-full"
+                />
+              </div>
+            ) : course.image_url ? (
               <div className="w-full h-[300px] md:h-[400px] relative mb-8 rounded-xl overflow-hidden">
                 <Image
                   src={course.image_url}
