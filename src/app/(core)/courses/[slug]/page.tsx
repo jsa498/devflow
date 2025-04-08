@@ -75,6 +75,10 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                   src={course.video_url}
                   poster={course.thumbnail_image_url || course.image_url || undefined}
                   className="w-full h-full"
+                  autoPlay={true}
+                  muted={true}
+                  controlsList="nodownload"
+                  loop={true}
                 />
               </div>
             ) : course.image_url ? (

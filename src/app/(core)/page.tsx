@@ -1,8 +1,5 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image'; // Import next/image
-import { useTheme } from 'next-themes'; // Assuming next-themes based on theme-provider pattern
 import { TrendingUp, ShoppingBag, BookOpen, ArrowRight } from 'lucide-react';
 import { RainbowButton } from '@/components/ui/rainbow-button'; // Updated path
 import { Card, CardDescription } from "@/components/ui/card"; // Import Card components
@@ -14,6 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"; // Import Carousel components
+import { createClient } from '@/lib/supabase/server'; // Add Supabase client import
 
 // Define the interface for featured items (can represent products or courses)
 interface FeaturedItem {
@@ -24,39 +22,41 @@ interface FeaturedItem {
   link: string; // Link for the "View Details" button
 }
 
-export default function Home() {
-  useTheme(); // Call useTheme if needed for side effects, otherwise remove
+export default async function Home() {
+  // Fetch Courses from Supabase
+  const supabase = await createClient();
+  const { data: courses, error: coursesError } = await supabase
+    .from('courses')
+    .select('id, title, description, slug, thumbnail_image_url, image_url') // Select necessary fields
+    .eq('is_published', true)
+    .order('created_at', { ascending: false });
 
-  // Define featured items including Fitbull and placeholders
-  const featuredItems: FeaturedItem[] = [
-    {
+  if (coursesError) {
+    console.error('Error fetching courses for homepage carousel:', coursesError);
+    // Handle error - log it for now, carousel will render without courses
+  }
+
+  // Define FitBull Item explicitly
+  const fitBullItem: FeaturedItem = {
       id: 'fitbull',
       title: 'FitBull Workout Tracker',
       description: 'Your ultimate workout companion. Log sets, track lifts, manage routines, and visualize strength gains.',
       image_url: '/fitbull/fitbull.JPG', // Path to FitBull image
-      link: '/products', // Link to the product page (or a specific product detail page if available)
-    },
-    {
-      id: 'placeholder-1',
-      title: 'Placeholder Product 1',
-      description: 'Brief description of placeholder product 1.',
-      image_url: undefined, // No image for placeholder
-      link: '#', // Placeholder link
-    },
-    {
-      id: 'placeholder-2',
-      title: 'Placeholder Resource 2',
-      description: 'Brief description of placeholder resource 2.',
-      image_url: undefined, // No image for placeholder
-      link: '#', // Placeholder link
-    },
-    {
-      id: 'placeholder-3',
-      title: 'Placeholder Course 3',
-      description: 'Brief description of placeholder course 3.',
-      image_url: undefined, // No image for placeholder
-      link: '#', // Placeholder link
-    },
+      link: '/products', // Link to the product page
+  };
+
+  // Combine FitBull and fetched courses for the carousel
+  const carouselItems: FeaturedItem[] = [
+    fitBullItem, // Add FitBull first
+    ...(courses?.map(course => ({
+      id: course.id,
+      title: course.title,
+      // Use a truncated description for the carousel card if needed, or adjust styling
+      // For now, using the full description from the DB
+      description: course.description,
+      image_url: course.thumbnail_image_url || course.image_url || undefined, // Prioritize thumbnail
+      link: `/courses/${course.slug}`, // Link to the specific course page
+    })) || []), // Map courses, handle null/error case gracefully
   ];
 
   return (
@@ -133,10 +133,10 @@ export default function Home() {
                 align: "start",
                 loop: true, // Optional: loop the carousel
               }}
-              className="w-full" 
+              className="w-full"
             >
               <CarouselContent className="-ml-4">
-                {featuredItems.map((item) => (
+                {carouselItems.map((item) => (
                   <CarouselItem key={item.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                     <div className="p-1 h-full">
                       <Card className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 h-full flex flex-col p-0">
@@ -147,7 +147,9 @@ export default function Home() {
                               alt={item.title}
                               fill
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              className="object-contain p-2 transition-transform duration-500 group-hover:scale-110" 
+                              className={`transition-transform duration-500 group-hover:scale-110 ${ 
+                                item.id === 'fitbull' ? 'object-contain p-2' : 'object-cover' 
+                              }`}
                             />
                           </div>
                         ) : (

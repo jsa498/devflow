@@ -13,6 +13,7 @@ interface VideoPlayerProps {
   poster?: string
   width?: string | number
   height?: string | number
+  controlsList?: string
 }
 
 export function VideoPlayer({
@@ -25,6 +26,7 @@ export function VideoPlayer({
   poster,
   width = "100%",
   height = "auto",
+  controlsList,
   ...props
 }: VideoPlayerProps & React.VideoHTMLAttributes<HTMLVideoElement>) {
   return (
@@ -38,6 +40,7 @@ export function VideoPlayer({
         poster={poster}
         width={width}
         height={height}
+        controlsList={controlsList}
         className="w-full h-full object-cover"
         {...props}
       />
