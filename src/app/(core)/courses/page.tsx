@@ -109,7 +109,7 @@ export default async function CoursesPage() {
                         {course.title}
                       </Link>
                     </h2>
-                    <CardDescription className="text-sm mb-6">
+                    <CardDescription className="text-sm mb-6 line-clamp-3">
                       {course.description}
                     </CardDescription>
                     
@@ -118,12 +118,20 @@ export default async function CoursesPage() {
                       <div className="mt-2 mb-6">
                         <h3 className="font-medium text-sm mb-2">What you&apos;ll learn:</h3>
                         <ul className="space-y-1">
-                          {course.what_youll_get.map((item: string, index: number) => (
+                          {course.what_youll_get.slice(0, 2).map((item: string, index: number) => (
                             <li key={index} className="text-sm text-muted-foreground flex items-start">
                               <div className="mr-2 mt-0.5 text-primary">•</div>
                               <span>{item}</span>
                             </li>
                           ))}
+                          {course.what_youll_get.length > 2 && (
+                            <li className="text-sm">
+                              <Link href={`/courses/${course.slug}`} className="text-primary hover:underline font-medium flex items-start">
+                                <div className="mr-2 mt-0.5 text-primary opacity-0">•</div> 
+                                <span>... and more</span>
+                              </Link>
+                            </li>
+                          )}
                         </ul>
                       </div>
                     )}
