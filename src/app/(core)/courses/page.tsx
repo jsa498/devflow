@@ -118,19 +118,37 @@ export default async function CoursesPage() {
                       <div className="mt-2 mb-6">
                         <h3 className="font-medium text-sm mb-2">What you&apos;ll learn:</h3>
                         <ul className="space-y-1">
-                          {course.what_youll_get.slice(0, 2).map((item: string, index: number) => (
-                            <li key={index} className="text-sm text-muted-foreground flex items-start">
-                              <div className="mr-2 mt-0.5 text-primary">•</div>
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                          {course.what_youll_get.length > 2 && (
-                            <li className="text-sm">
-                              <Link href={`/courses/${course.slug}`} className="text-primary hover:underline font-medium flex items-start">
-                                <div className="mr-2 mt-0.5 text-primary opacity-0">•</div> 
-                                <span>... and more</span>
-                              </Link>
-                            </li>
+                          {course.title === "Introduction to Modern Web Development" ? (
+                            // Show all bullet points for the Introduction course
+                            course.what_youll_get.map((item: string, index: number) => (
+                              <li key={index} className="text-sm text-muted-foreground flex items-start">
+                                <div className="mr-2 mt-0.5 text-primary">•</div>
+                                <span>{item}</span>
+                              </li>
+                            ))
+                          ) : (
+                            // For other courses, use the "and more" format
+                            <>
+                              {course.what_youll_get.slice(0, 1).map((item: string, index: number) => (
+                                <li key={index} className="text-sm text-muted-foreground flex items-start">
+                                  <div className="mr-2 mt-0.5 text-primary">•</div>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                              {course.what_youll_get.length > 1 && (
+                                <li className="text-sm text-muted-foreground flex items-start">
+                                  <div className="mr-2 mt-0.5 text-primary">•</div>
+                                  <span>
+                                    {course.what_youll_get[1]}
+                                    {course.what_youll_get.length > 2 && (
+                                      <Link href={`/courses/${course.slug}`} className="text-primary hover:underline font-medium inline-block ml-1">
+                                        ... and more
+                                      </Link>
+                                    )}
+                                  </span>
+                                </li>
+                              )}
+                            </>
                           )}
                         </ul>
                       </div>
