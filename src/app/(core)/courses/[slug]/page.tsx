@@ -5,12 +5,20 @@ import { ChevronLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/ui/video-player";
+import { CheckoutButton } from './CheckoutButton';
 
 export const revalidate = 3600; // Revalidate this page every hour
 
-export default async function CourseDetailPage({ params }: { params: { slug: string } }) {
-  // Await params before using its properties
+export default async function CourseDetailPage({ 
+  params,
+  searchParams 
+}: { 
+  params: { slug: string },
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  // Explicitly await both params and searchParams
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const { slug } = resolvedParams;
   
   const supabase = await createClient();
@@ -23,6 +31,11 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
     .eq('is_published', true)
     .single();
 
+  // Access searchParams after awaiting it
+  const success = resolvedSearchParams.success === 'true';
+  const sessionId = resolvedSearchParams.session_id as string | undefined;
+  const canceled = resolvedSearchParams.canceled === 'true';
+
   if (error || !course) {
     console.error('Error fetching course:', error);
     return notFound();
@@ -32,6 +45,13 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   const formatPrice = (price: number) => {
     return `$${price.toFixed(2)}`;
   };
+
+  // Handle successful payment if sessionId exists
+  if (success && sessionId) {
+    // Import action dynamically to avoid including it in the client bundle
+    const { recordCoursePurchase } = await import('@/app/api/actions/stripe');
+    await recordCoursePurchase(sessionId);
+  }
 
   return (
     <div className="bg-background min-h-screen pb-20">
@@ -44,6 +64,25 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
           </Button>
         </Link>
       </div>
+
+      {/* Success/Error Messages */}
+      {success && (
+        <div className="container mx-auto px-4 mb-8">
+          <div className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 p-4 rounded-lg">
+            <h3 className="font-medium">Purchase Successful!</h3>
+            <p>Thank you for your purchase. You now have access to this course.</p>
+          </div>
+        </div>
+      )}
+      
+      {canceled && (
+        <div className="container mx-auto px-4 mb-8">
+          <div className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 p-4 rounded-lg">
+            <h3 className="font-medium">Payment Canceled</h3>
+            <p>Your payment was canceled. You have not been charged.</p>
+          </div>
+        </div>
+      )}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -129,9 +168,13 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
               </div>
               
               <div className="space-y-4 mb-6">
-                <Button className="w-full text-base py-6" size="lg">
-                  Buy Now
-                </Button>
+                <CheckoutButton
+                  courseId={course.id}
+                  courseTitle={course.title}
+                  coursePrice={course.price}
+                  courseSlug={course.slug}
+                  courseImageUrl={course.thumbnail_image_url || course.image_url || ''}
+                />
                 
                 <Button variant="outline" className="w-full text-base py-6" size="lg">
                   Add to Cart

@@ -4,14 +4,66 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '../ui/theme-toggle'; // Adjusted path to use relative import
-import { Menu, X, ShoppingCart } from 'lucide-react'; // Added ShoppingCart icon
+import { Menu, X, ShoppingCart, User as UserIcon } from 'lucide-react'; // Removed LogOut, Added UserIcon
 import { Button } from '../ui/button'; // Adjusted path
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'; // Adjusted path
+import { createClient } from '@/lib/supabase/client'; // Import Supabase client
+import { User } from '@supabase/supabase-js'; // Import User type
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar" // Import Avatar
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu" // Import DropdownMenu
+import { LogoutButton } from '@/components/logout-button'; // Import LogoutButton
 
 export const Navbar = () => {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null); // Add user state
+  const [loadingUser, setLoadingUser] = useState(true); // Add loading state
+
+  // Fetch user session
+  useEffect(() => {
+    const supabase = createClient();
+    let isMounted = true;
+
+    async function getUserSession() {
+      setLoadingUser(true);
+      const { data, error } = await supabase.auth.getUser();
+      if (isMounted) {
+        if (error) {
+          console.error("Error fetching user:", error);
+          setUser(null);
+        } else {
+          setUser(data.user);
+        }
+        setLoadingUser(false);
+      }
+    }
+
+    getUserSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) {
+        setUser(session?.user ?? null);
+        // No need to set loading false here as getUserSession already does
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
 
   // Close sheet when pathname changes (navigation occurs)
   useEffect(() => {
@@ -81,11 +133,48 @@ export const Navbar = () => {
           
           <ThemeToggle />
           
-          {/* Sign in button (placeholder for now) */}
+          {/* Conditional Sign in / User Profile Dropdown */}
           <div className="hidden md:flex items-center">
-            <Button asChild variant="secondary" size="sm" className="rounded-full px-4 py-1.5 text-sm">
-              <Link href="/auth/login">Sign in</Link>
-            </Button>
+            {loadingUser ? (
+              // Optional: Show a skeleton or loading indicator
+              <div className="h-8 w-20 animate-pulse rounded-full bg-muted-foreground/20"></div>
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Avatar className="h-9 w-9">
+                      {/* TODO: Add user avatar URL if available in profile */}
+                      <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                      <AvatarFallback>
+                        {user.email?.charAt(0).toUpperCase() ?? <UserIcon className="h-5 w-5" />}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      {/* TODO: Add user name if available */}
+                      {/* <p className="text-sm font-medium leading-none">{user.user_metadata?.name ?? 'User'}</p> */}
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {/* <DropdownMenuItem>Profile</DropdownMenuItem> */}
+                  {/* <DropdownMenuItem>Settings</DropdownMenuItem> */}
+                  <DropdownMenuItem className="p-0">
+                    <LogoutButton variant="ghost" className="w-full justify-start cursor-pointer font-normal h-auto py-1.5 px-2" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="secondary" size="sm" className="rounded-full px-4 py-1.5 text-sm">
+                {/* Add redirect_to parameter */}
+                <Link href={`/auth/login?redirect_to=${encodeURIComponent(pathname)}`}>Sign in</Link>
+              </Button>
+            )}
           </div>
           
           {/* Mobile menu */}
@@ -160,14 +249,34 @@ export const Navbar = () => {
                       </Link>
                     </nav>
 
-                    {/* Sign in button at the bottom */}
+                    {/* Sign in / User Profile in Mobile Menu */}
                     <div className="mt-6 pt-6 border-t border-border">
-                      <Button 
-                        asChild 
-                        className="w-full h-11 rounded-lg text-base font-medium"
-                      >
-                        <Link href="/auth/login">Sign in</Link>
-                      </Button>
+                      {loadingUser ? (
+                         <div className="h-11 w-full animate-pulse rounded-lg bg-muted-foreground/20"></div>
+                      ) : user ? (
+                        // Display user info and logout in mobile menu
+                        <div className="flex flex-col gap-2">
+                           <div className="flex items-center gap-2 px-3 py-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                                <AvatarFallback>
+                                  {user.email?.charAt(0).toUpperCase() ?? <UserIcon className="h-4 w-4" />}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium truncate">{user.email}</span>
+                            </div>
+                           <LogoutButton className="w-full h-11 rounded-lg text-base font-medium justify-start" />
+                        </div>
+                      ) : (
+                        <Button 
+                          asChild 
+                          className="w-full h-11 rounded-lg text-base font-medium"
+                          onClick={() => setIsOpen(false)} // Close sheet on click
+                        >
+                          {/* Add redirect_to parameter */}
+                          <Link href={`/auth/login?redirect_to=${encodeURIComponent(pathname)}`}>Sign in</Link>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

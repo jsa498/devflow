@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
@@ -23,6 +23,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,12 +37,14 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
       return
     }
 
+    const redirectToPath = searchParams.get('redirect_to') || '/'
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(redirectToPath)}`,
         },
       })
       if (error) throw error
