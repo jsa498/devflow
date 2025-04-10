@@ -12,7 +12,8 @@ export async function createCheckoutSession(
   courseTitle: string, 
   coursePrice: number, 
   courseSlug: string,
-  courseImageUrl: string
+  courseImageUrl: string,
+  courseDescription: string
 ) {
   let user;
   try {
@@ -39,6 +40,7 @@ export async function createCheckoutSession(
     // Create a Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      customer_email: user.email,
       line_items: [
         {
           price_data: {
@@ -46,6 +48,7 @@ export async function createCheckoutSession(
             product_data: {
               name: courseTitle,
               images: [courseImageUrl],
+              description: courseDescription,
             },
             unit_amount: Math.round(coursePrice * 100), // Convert from dollars to cents
           },

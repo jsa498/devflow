@@ -5,26 +5,49 @@ import { type NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const token_hash = searchParams.get('token_hash')
-  const type = searchParams.get('type') as EmailOtpType | null
+  const code = searchParams.get('code') // PKCE flow
+  const token_hash = searchParams.get('token_hash') // Older flow / Email OTP
+  const type = searchParams.get('type') as EmailOtpType | null // Older flow / Email OTP
   const next = searchParams.get('next') ?? '/'
 
-  if (token_hash && type) {
-    const supabase = await createClient()
+  const redirectTo = request.nextUrl.clone()
+  redirectTo.pathname = next
+  redirectTo.searchParams.delete('code') // Clean up params
+  redirectTo.searchParams.delete('token_hash')
+  redirectTo.searchParams.delete('type')
+  redirectTo.searchParams.delete('next')
 
-    const { error } = await supabase.auth.verifyOtp({
+  const supabase = await createClient()
+  let error: string | null = null
+
+  if (code) {
+    // Handle PKCE code exchange
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    if (exchangeError) {
+      error = exchangeError.message
+    }
+  } else if (token_hash && type) {
+    // Handle older token/type verification
+    const { error: verifyError } = await supabase.auth.verifyOtp({
       type,
       token_hash,
     })
-    if (!error) {
-      // redirect user to specified redirect URL or root of app
-      redirect(next)
-    } else {
-      // redirect the user to an error page with some instructions
-      redirect(`/auth/error?error=${error?.message}`)
-    }
+     if (verifyError) {
+       error = verifyError.message
+     }
+  } else {
+    // No valid parameters found
+    error = 'No valid confirmation parameters found (code, or token_hash/type).'
   }
 
-  // redirect the user to an error page with some instructions
-  redirect(`/auth/error?error=No token hash or type`)
+  if (!error) {
+    // Redirect to the 'next' URL on success (cleaned)
+    redirectTo.searchParams.delete('error') // Ensure no error param exists
+    return redirect(redirectTo.toString())
+  } else {
+    // Redirect to an error page on failure (cleaned)
+    redirectTo.pathname = '/auth/error'
+    redirectTo.searchParams.set('error', error)
+    return redirect(redirectTo.toString())
+  }
 }

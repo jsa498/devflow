@@ -26,6 +26,7 @@ interface CheckoutButtonProps {
   coursePrice: number;
   courseSlug: string;
   courseImageUrl: string;
+  courseDescription: string;
 }
 
 export function CheckoutButton({
@@ -34,6 +35,7 @@ export function CheckoutButton({
   coursePrice,
   courseSlug,
   courseImageUrl,
+  courseDescription,
 }: CheckoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -49,7 +51,8 @@ export function CheckoutButton({
         courseTitle,
         coursePrice,
         courseSlug,
-        courseImageUrl
+        courseImageUrl,
+        courseDescription
       );
 
       if (!result.success) {

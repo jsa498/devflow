@@ -164,6 +164,13 @@ export const Navbar = () => {
                   <DropdownMenuSeparator />
                   {/* <DropdownMenuItem>Profile</DropdownMenuItem> */}
                   {/* <DropdownMenuItem>Settings</DropdownMenuItem> */}
+                  {/* Add Dashboard Link */}
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem className="p-0">
                     <LogoutButton variant="ghost" className="w-full justify-start cursor-pointer font-normal h-auto py-1.5 px-2" />
                   </DropdownMenuItem>

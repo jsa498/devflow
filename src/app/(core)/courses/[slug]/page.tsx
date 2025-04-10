@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/ui/video-player";
@@ -23,6 +23,9 @@ export default async function CourseDetailPage({
   
   const supabase = await createClient();
   
+  // Fetch user session FIRST
+  const { data: { user } } = await supabase.auth.getUser();
+  
   // Fetch the specific course by slug
   const { data: course, error } = await supabase
     .from('courses')
@@ -39,6 +42,24 @@ export default async function CourseDetailPage({
   if (error || !course) {
     console.error('Error fetching course:', error);
     return notFound();
+  }
+
+  // Check if the user is enrolled in this course
+  let isEnrolled = false;
+  if (user && course) {
+    const { data: enrollment, error: enrollmentError } = await supabase
+      .from('user_course_enrollments')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('course_id', course.id)
+      .maybeSingle(); // Use maybeSingle as enrollment might not exist
+
+    if (enrollmentError) {
+      console.error('Error checking enrollment:', enrollmentError);
+      // Decide how to handle this error - maybe still show purchase options?
+    } else if (enrollment) {
+      isEnrolled = true;
+    }
   }
 
   // Format price with dollar sign and ensure it's displayed with 2 decimal places
@@ -167,19 +188,33 @@ export default async function CourseDetailPage({
                 {formatPrice(course.price)}
               </div>
               
-              <div className="space-y-4 mb-6">
-                <CheckoutButton
-                  courseId={course.id}
-                  courseTitle={course.title}
-                  coursePrice={course.price}
-                  courseSlug={course.slug}
-                  courseImageUrl={course.thumbnail_image_url || course.image_url || ''}
-                />
-                
-                <Button variant="outline" className="w-full text-base py-6" size="lg">
-                  Add to Cart
-                </Button>
-              </div>
+              {/* Conditional Purchase/Access Section */}
+              {isEnrolled ? (
+                <div className="space-y-4 mb-6 text-center">
+                  <div className="flex items-center justify-center p-4 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 rounded-lg mb-4">
+                    <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+                    <p className="text-sm font-medium">You have access to this course</p>
+                  </div>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/dashboard">Go to Dashboard</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4 mb-6">
+                  <CheckoutButton
+                    courseId={course.id}
+                    courseTitle={course.title}
+                    coursePrice={course.price}
+                    courseSlug={course.slug}
+                    courseImageUrl={course.thumbnail_image_url || course.image_url || ''}
+                    courseDescription={course.description}
+                  />
+                  
+                  <Button variant="outline" className="w-full text-base py-6" size="lg">
+                    Add to Cart
+                  </Button>
+                </div>
+              )}
               
               <div className="text-sm text-muted-foreground mt-6">
                 <p className="mb-2">• Full lifetime access</p>
