@@ -149,6 +149,13 @@ export default async function DashboardPage() {
                     {course.title}
                   </Link>
                 </CardTitle>
+                <div className="mt-4">
+                  <Button asChild size="sm" className="w-full">
+                    <Link href={`/learn/${course.slug}`}>
+                      Start Course
+                    </Link>
+                  </Button>
+                </div>
               </CardHeader>
             </Card>
           ))}

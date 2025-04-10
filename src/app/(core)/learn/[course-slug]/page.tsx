@@ -137,14 +137,6 @@ export default async function CourseLearnPage({ params }: { params: { 'course-sl
             <p className="text-muted-foreground text-center py-8">Course content is coming soon!</p>
          )}
       </div>
-
-      {/* Placeholder for Start/Continue Button */}
-      <div className="mt-8 flex justify-center">
-          {/* TODO: Link this to the first lesson or track progress */}
-          <Button size="lg">
-              Start Course
-          </Button>
-      </div>
     </div>
   );
 } 
