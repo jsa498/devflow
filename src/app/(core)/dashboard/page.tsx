@@ -145,7 +145,7 @@ export default async function DashboardPage() {
               <CardHeader className="flex-grow">
                 <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
                   {/* Link will eventually go to the course content page */}
-                  <Link href={`/courses/${course.slug}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
+                  <Link href={`/learn/${course.slug}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
                     {course.title}
                   </Link>
                 </CardTitle>
