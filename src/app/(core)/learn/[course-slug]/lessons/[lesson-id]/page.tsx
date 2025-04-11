@@ -30,11 +30,12 @@ interface Course {
   // Add other course fields if needed by layout
 }
 
+// Update interface to expect a Promise
 interface LessonPageProps {
-  params: {
+  params: Promise<{ // Now a Promise
     'course-slug': string;
     'lesson-id': string;
-  };
+  }>;
 }
 
 // Helper to find next/prev lessons
@@ -63,13 +64,18 @@ const findAdjacentLessons = (modules: Module[], currentLessonId: string) => {
 
 export const revalidate = 0; // Or set a reasonable revalidation period
 
-export default async function LessonPage({ params }: LessonPageProps) {
+// Update signature to use a different prop name for the promise
+export default async function LessonPage({ params: paramsPromise }: LessonPageProps) {
   const supabase = await createClient();
+
+  // Await the params promise first
+  const params = await paramsPromise;
   const { 'course-slug': courseSlug, 'lesson-id': lessonId } = params;
 
   // 1. Get user session
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
+  // Use resolved slugs in redirect
   if (userError || !user) {
     redirect(`/auth/login?redirect_to=/learn/${courseSlug}/lessons/${lessonId}`);
   }

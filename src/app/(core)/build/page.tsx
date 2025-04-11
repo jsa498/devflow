@@ -17,7 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"; // 
 const plans = [
   {
     title: "Basic Plan",
-    description: "Perfect for beginners who need occasional guidance",
+    description: "Ideal for experienced individuals needing periodic expert check-ins.",
     price: 120.00,
     setupFee: 200,
     features: [
@@ -103,7 +103,7 @@ export default function BuildPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
         {plans.map((plan) => (
-          <Card key={plan.title} className={`flex flex-col ${plan.popular ? 'border-primary border-2 relative shadow-lg' : ''}`}>
+          <Card key={plan.title} className={`flex flex-col ${plan.popular ? 'border-primary border-2 relative shadow-lg' : ''} hover:shadow-xl hover:scale-[1.02] transition-transform duration-200 ease-in-out`}>
              {plan.popular && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
                 Most Popular

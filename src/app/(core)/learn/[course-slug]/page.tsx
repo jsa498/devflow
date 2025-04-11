@@ -33,16 +33,23 @@ interface Course {
   what_youll_get?: string[];
 }
 
+// Define the resolved params type
+type CourseLearnPageResolvedParams = { 'course-slug': string };
+
 export const revalidate = 0; // Or set a reasonable revalidation period
 
-export default async function CourseLearnPage({ params }: { params: { 'course-slug': string } }) {
+// Update signature to accept a Promise
+export default async function CourseLearnPage({ params: paramsPromise }: { params: Promise<CourseLearnPageResolvedParams> }) {
   const supabase = await createClient();
+
+  // Await the params promise first
+  const params = await paramsPromise;
   const { 'course-slug': courseSlug } = params;
 
   // 1. Get user session
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  // Redirect to login if no user
+  // Redirect to login if no user - use the resolved courseSlug
   if (userError || !user) {
     redirect(`/auth/login?redirect_to=/learn/${courseSlug}`);
   }
