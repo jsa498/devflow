@@ -43,9 +43,9 @@ export function CourseSidebar({ modules, courseSlug, className }: CourseSidebarP
                   <ul className="space-y-1 pt-1">
                     {module.lessons.map((lesson) => (
                       <li key={lesson.id}>
-                        {/* TODO: Update Link href when lesson slug is available */}
+                        {/* TODO: Update Link href when lesson slug is available - Now updated */}
                         <Link
-                          href={`/learn/${courseSlug}/lesson-${lesson.id}`} // Placeholder href
+                          href={`/learn/${courseSlug}/lessons/${lesson.id}`} // Updated href
                           className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                           // Add active state styling later based on current lesson
                         >
