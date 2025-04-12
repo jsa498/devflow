@@ -120,6 +120,14 @@ export const Navbar = () => {
             >
               Build
             </Link>
+            <Link 
+              href="/programs" 
+              className={`px-4 py-2 transition-colors hover:text-primary ${
+                pathname === '/programs' ? 'text-primary font-medium' : 'text-muted-foreground'
+              }`}
+            >
+              Programs
+            </Link>
           </div>
         </div>
         
@@ -253,6 +261,15 @@ export const Navbar = () => {
                         onClick={() => setIsOpen(false)}
                       >
                         Build
+                      </Link>
+                      <Link 
+                        href="/programs"
+                        className={`flex items-center min-h-[44px] px-3 rounded-lg text-base font-medium transition-all hover:bg-muted/50 active:bg-muted/80 ${
+                          pathname === '/programs' ? 'bg-muted text-primary' : 'text-foreground'
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Programs
                       </Link>
                     </nav>
 
