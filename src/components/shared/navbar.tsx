@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '../ui/theme-toggle'; // Adjusted path to use relative import
-import { Menu, X, ShoppingCart, User as UserIcon } from 'lucide-react'; // Removed LogOut, Added UserIcon
+import { Menu, ShoppingCart, User as UserIcon, LayoutDashboard } from 'lucide-react'; // Removed X, Removed LogOut, Added UserIcon, Added LayoutDashboard
 import { Button } from '../ui/button'; // Adjusted path
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'; // Adjusted path
 import { createClient } from '@/lib/supabase/client'; // Import Supabase client
@@ -211,20 +211,8 @@ export const Navbar = () => {
                 className="w-full sm:w-80 p-0"
               >
                 <div className="flex flex-col h-full">
-                  {/* Header with larger close target */}
-                  <div className="p-4 flex justify-end border-b border-border">
-                    <Button
-                      variant="ghost"
-                      className="h-9 w-9 p-0 rounded-full hover:bg-muted/50 transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <X className="h-5 w-5" />
-                      <span className="sr-only">Close</span>
-                    </Button>
-                  </div>
-
                   {/* Navigation links with larger touch targets */}
-                  <div className="flex-1 overflow-auto px-4 pb-6 pt-4">
+                  <div className="flex-1 overflow-auto px-4 pb-6 pt-6">
                     <nav className="space-y-1">
                       <Link 
                         href="/"
@@ -280,7 +268,7 @@ export const Navbar = () => {
                       ) : user ? (
                         // Display user info and logout in mobile menu
                         <div className="flex flex-col gap-2">
-                           <div className="flex items-center gap-2 px-3 py-2">
+                           <div className="flex items-center gap-2 px-3 py-2 mb-2">
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
                                 <AvatarFallback>
@@ -289,6 +277,14 @@ export const Navbar = () => {
                               </Avatar>
                               <span className="text-sm font-medium truncate">{user.email}</span>
                             </div>
+                            <Link 
+                              href="/dashboard"
+                              className={`flex items-center min-h-[44px] px-3 rounded-lg text-base font-medium transition-all hover:bg-muted/50 active:bg-muted/80 text-foreground`}
+                              onClick={() => setIsOpen(false)}
+                            >
+                              <LayoutDashboard className="mr-2 h-5 w-5" />
+                              Dashboard
+                            </Link>
                            <LogoutButton className="w-full h-11 rounded-lg text-base font-medium justify-start" />
                         </div>
                       ) : (
