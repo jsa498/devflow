@@ -119,7 +119,10 @@ export async function recordCoursePurchase(sessionId: string) {
     const pricePaid = amountTotal ? amountTotal / 100 : null; // Convert from cents to dollars
     
     // Insert enrollment record
+    console.log('[Action] Attempting to create Supabase client for course enrollment...');
     const supabase = await createClient();
+    console.log('[Action] Supabase client created successfully for course enrollment.');
+    
     const { data, error } = await supabase
       .from('user_course_enrollments')
       .insert({

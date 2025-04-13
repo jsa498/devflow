@@ -49,7 +49,10 @@ export async function POST(req: NextRequest) {
       console.log(`Processing program enrollment completion for ID: ${programEnrollmentId}, Subscription ID: ${subscriptionId}`);
 
       try {
+        console.log('[Webhook] Attempting to create Supabase client for program enrollment...');
         const supabase = await createClient();
+        console.log('[Webhook] Supabase client created successfully for program enrollment.');
+        
         const { error: updateError } = await supabase
           .from('program_enrollments')
           .update({
