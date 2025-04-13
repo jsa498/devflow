@@ -9,12 +9,21 @@ import { CheckoutButton } from './CheckoutButton';
 
 export const revalidate = 3600; // Revalidate this page every hour
 
+// Define types for the resolved props
+type PageParams = {
+  slug: string;
+};
+
+type PageSearchParams = { 
+  [key: string]: string | string[] | undefined 
+};
+
 export default async function CourseDetailPage({ 
   params,
   searchParams 
 }: { 
-  params: { slug: string },
-  searchParams: { [key: string]: string | string[] | undefined }
+  params: Promise<PageParams>, // Update type to Promise
+  searchParams: Promise<PageSearchParams> // Update type to Promise
 }) {
   // Explicitly await both params and searchParams
   const resolvedParams = await params;
