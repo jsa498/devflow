@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/ui/video-player";
 import { CheckoutButton } from './CheckoutButton';
+import { HandlePurchaseSuccess } from './HandlePurchaseSuccess';
 
 export const revalidate = 3600; // Revalidate this page every hour
 
@@ -45,7 +46,6 @@ export default async function CourseDetailPage({
 
   // Access searchParams after awaiting it
   const success = resolvedSearchParams.success === 'true';
-  const sessionId = resolvedSearchParams.session_id as string | undefined;
   const canceled = resolvedSearchParams.canceled === 'true';
 
   if (error || !course) {
@@ -76,15 +76,11 @@ export default async function CourseDetailPage({
     return `$${price.toFixed(2)}`;
   };
 
-  // Handle successful payment if sessionId exists
-  if (success && sessionId) {
-    // Import action dynamically to avoid including it in the client bundle
-    const { recordCoursePurchase } = await import('@/app/api/actions/stripe');
-    await recordCoursePurchase(sessionId);
-  }
-
   return (
     <div className="bg-background min-h-screen pb-20">
+      {/* Render the client component to handle the action call */}
+      <HandlePurchaseSuccess />
+
       {/* Back Button */}
       <div className="container mx-auto px-4 pt-8">
         <Link href="/courses" passHref>
