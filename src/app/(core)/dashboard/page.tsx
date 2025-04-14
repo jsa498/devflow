@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BookOpen, CalendarDays } from 'lucide-react';
+import { VerifyPurchaseClient } from './VerifyPurchaseClient';
 
 export const revalidate = 0; // Ensure fresh data on each visit
 
@@ -53,7 +54,7 @@ export default async function DashboardPage() {
 
   // 2. Redirect if not logged in
   if (userError || !user) {
-    redirect('/auth/login?redirect_to=/dashboard');
+    redirect('/auth/login');
   }
 
   // 3. Fetch enrolled courses (parallel fetch)
@@ -120,11 +121,14 @@ export default async function DashboardPage() {
   const activeProgramEnrollment = programEnrollmentResult.data as ProgramEnrollmentType | null;
 
   return (
-    <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-10">
+    <div className="container mx-auto px-4 py-8">
+      {/* Render the client component - it doesn't display anything visually */}
+      <VerifyPurchaseClient /> 
+      
       {/* Program Enrollment Section */}
       {activeProgramEnrollment && (
-        <section>
-          <h2 className="text-2xl font-semibold tracking-tight mb-4">My Program</h2>
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4">My Program</h2>
           <Card className="bg-gradient-to-r from-primary/10 to-background border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -148,7 +152,7 @@ export default async function DashboardPage() {
 
       {/* Existing Courses Section */}
       <section>
-        <h2 className="text-2xl font-semibold tracking-tight mb-4">My Courses</h2>
+        <h2 className="text-2xl font-semibold mb-4">My Courses</h2>
 
         {/* Course Loading Error */}
         {courseEnrollmentResult.error && (
@@ -218,6 +222,16 @@ export default async function DashboardPage() {
           )
         )}
       </section>
+
+      {/* Message for no enrollments - Check program data directly, check course data length */}
+      {!programEnrollmentResult.data && (!courseEnrollmentResult.data || courseEnrollmentResult.data.length === 0) && (
+         <div className="text-center py-12">
+           <p className="text-lg text-gray-600 mb-4">You haven&apos;t enrolled in any courses or programs yet.</p>
+           <Link href="/products" passHref>
+              <Button>Browse Offerings</Button>
+           </Link>
+         </div>
+      )}
     </div>
   );
 } 

@@ -66,7 +66,7 @@ export async function createProgramCheckoutSession(
     enrollmentId = newEnrollment.id;
 
     // 3. Create Stripe Checkout Session for Subscription
-    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?program_enrollment=success&program_name=${encodeURIComponent(programName)}&slot=${encodeURIComponent(selectedSlot)}`;
+    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?program_enrollment=success&program_name=${encodeURIComponent(programName)}&slot=${encodeURIComponent(selectedSlot)}&checkout_session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/programs?canceled=true`;
 
     const session = await stripe.checkout.sessions.create({

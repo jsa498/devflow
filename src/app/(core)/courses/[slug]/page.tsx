@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/ui/video-player";
 import { CheckoutButton } from './CheckoutButton';
 import { HandlePurchaseSuccess } from './HandlePurchaseSuccess';
+import { VerifyCoursePurchaseClient } from './VerifyCoursePurchaseClient';
 
 export const revalidate = 3600; // Revalidate this page every hour
 
@@ -230,6 +231,9 @@ export default async function CourseDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Render the client verification component */}
+      <VerifyCoursePurchaseClient />
     </div>
   );
 } 

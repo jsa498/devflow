@@ -5,6 +5,6 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-03-31.basil', // Using the exact version expected by type definitions
+  apiVersion: '2024-04-10', // Using the exact version expected by type definitions
   typescript: true,
 }); 
