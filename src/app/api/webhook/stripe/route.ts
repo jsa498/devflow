@@ -6,23 +6,32 @@ import Stripe from 'stripe';
 
 // This is your Stripe webhook endpoint
 export async function POST(req: NextRequest) {
-  const body = await req.text();
-  const signature = req.headers.get('stripe-signature');
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Read the body as a Buffer to ensure it's the raw payload
+  const buf = await req.arrayBuffer();
+  const body = Buffer.from(buf);
 
+  const signature = req.headers.get('Stripe-Signature');
+  console.log('Signature:', signature);
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  console.log('Webhook Secret:', webhookSecret);
+  console.log('Type of Webhook Secret:', typeof webhookSecret);
   // Validate that this is a legitimate Stripe webhook
   if (!signature || !webhookSecret) {
     console.warn('Webhook signature or secret missing');
     return new NextResponse('Webhook signature or secret missing', { status: 400 });
   }
 
+  console.log('everything went well so far');
+
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
+    // Pass the raw Buffer body to constructEventAsync
+    event = await stripe.webhooks.constructEventAsync(
+      body, // Use the Buffer directly
       signature,
       webhookSecret
     );
+    console.log('Event: from stripe', event);
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown webhook error';
     console.error(`Webhook Error: ${errorMessage}`);
