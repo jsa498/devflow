@@ -8,6 +8,7 @@ import { VideoPlayer } from "@/components/ui/video-player";
 import { CheckoutButton } from './CheckoutButton';
 import { HandlePurchaseSuccess } from './HandlePurchaseSuccess';
 import { VerifyCoursePurchaseClient } from './VerifyCoursePurchaseClient';
+import { AddToCartButton } from './AddToCartButton';
 
 export const revalidate = 3600; // Revalidate this page every hour
 
@@ -216,9 +217,9 @@ export default async function CourseDetailPage({
                     courseDescription={course.description}
                   />
                   
-                  <Button variant="outline" className="w-full text-base py-6" size="lg">
-                    Add to Cart
-                  </Button>
+                  <AddToCartButton
+                    courseId={course.id}
+                  />
                 </div>
               )}
               

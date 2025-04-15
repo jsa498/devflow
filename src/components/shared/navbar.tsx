@@ -23,8 +23,41 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu" // Import DropdownMenu
 import { LogoutButton } from '@/components/logout-button'; // Import LogoutButton
+import { Badge } from '@/components/ui/badge'; // Import Badge for cart count
+import { useCart } from './cart-context'; // Import cart context
+import { CartDropdown } from './cart-dropdown'; // Import cart dropdown
 
-export const Navbar = () => {
+// Create a separate CartButton component that uses the cart context
+const CartButton = () => {
+  const { cartCount, isCartOpen, setIsCartOpen } = useCart();
+  
+  return (
+    <div className="relative">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="rounded-full relative"
+        onClick={() => setIsCartOpen(!isCartOpen)}
+        aria-label="Shopping cart"
+      >
+        <ShoppingCart className="h-[1.2rem] w-[1.2rem]" />
+        {cartCount > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+          >
+            {cartCount}
+          </Badge>
+        )}
+        <span className="sr-only">Shopping cart</span>
+      </Button>
+      <CartDropdown />
+    </div>
+  );
+};
+
+// Wrap the existing Navbar with CartProvider
+const NavbarWithCart = () => {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -133,11 +166,8 @@ export const Navbar = () => {
         
         {/* Right side: theme toggle and cart */}
         <div className="flex items-center gap-4">
-          {/* Cart Icon Placeholder */}
-          <Button variant="ghost" size="icon" className="rounded-full relative">
-            <ShoppingCart className="h-[1.2rem] w-[1.2rem]" />
-            <span className="sr-only">Shopping cart</span>
-          </Button>
+          {/* Cart Icon with Dropdown */}
+          <CartButton />
           
           <ThemeToggle />
           
@@ -306,5 +336,12 @@ export const Navbar = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Export a wrapped version of the Navbar
+export const Navbar = () => {
+  return (
+    <NavbarWithCart />
   );
 }; 
