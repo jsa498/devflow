@@ -84,42 +84,42 @@ export const CartDropdown = () => {
   return (
     <div 
       ref={dropdownRef}
-      className="absolute top-12 right-0 z-50 w-80 bg-background border border-border rounded-lg shadow-lg p-4"
+      className="absolute top-12 right-0 z-50 w-96 max-h-[calc(100vh-6rem)] bg-background border border-border rounded-lg shadow-lg flex flex-col"
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between p-4 border-b border-border">
         <h3 className="font-medium text-lg">Your Cart ({cartCount})</h3>
         <button
           onClick={() => setIsCartOpen(false)}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground h-8 w-8 flex items-center justify-center rounded-full"
           aria-label="Close cart"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      {isLoading ? (
-        <div className="py-8 flex justify-center">
-          <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : cartItems.length === 0 ? (
-        <div className="py-8 text-center">
-          <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Your cart is empty</p>
-          <Button 
-            asChild 
-            variant="link" 
-            className="mt-2"
-            onClick={() => setIsCartOpen(false)}
-          >
-            <Link href="/courses">Browse Courses</Link>
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="max-h-60 overflow-y-auto mb-4 space-y-3">
+      <div className="overflow-y-auto flex-1 p-4">
+        {isLoading ? (
+          <div className="py-8 flex justify-center">
+            <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : cartItems.length === 0 ? (
+          <div className="py-8 text-center">
+            <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Your cart is empty</p>
+            <Button 
+              asChild 
+              variant="link" 
+              className="mt-2"
+              onClick={() => setIsCartOpen(false)}
+            >
+              <Link href="/courses">Browse Courses</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
             {cartItems.map((item) => (
-              <div key={item.id} className="flex border-b border-border pb-3">
-                <div className="w-16 h-12 bg-muted rounded relative overflow-hidden flex-shrink-0">
+              <div key={item.id} className="flex items-start space-x-3 border-b border-border pb-4">
+                <div className="w-20 h-16 bg-muted rounded relative overflow-hidden flex-shrink-0">
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
@@ -145,21 +145,21 @@ export const CartDropdown = () => {
                     </div>
                   )}
                 </div>
-                <div className="ml-3 flex-grow min-w-0">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <Link 
                       href={`/courses/${item.slug}`}
-                      className="font-medium text-sm line-clamp-2 hover:text-primary"
+                      className="font-medium text-base line-clamp-2 hover:text-primary"
                       onClick={() => setIsCartOpen(false)}
                     >
                       {item.title}
                     </Link>
                     <button
                       onClick={() => removeFromCart(item.course_id)}
-                      className="text-muted-foreground hover:text-foreground ml-2 flex-shrink-0"
+                      className="text-muted-foreground hover:text-foreground ml-2 p-1 flex-shrink-0"
                       aria-label={`Remove ${item.title} from cart`}
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="text-sm text-primary font-medium mt-1">
@@ -169,23 +169,23 @@ export const CartDropdown = () => {
               </div>
             ))}
           </div>
-          
-          {/* Subtotal and checkout button */}
-          <div className="pt-2 border-t border-border">
-            <div className="flex justify-between py-2 font-medium">
-              <span>Subtotal</span>
-              <span>{formatPrice(totalPrice)}</span>
-            </div>
-            <Button 
-              className="w-full" 
-              size="lg"
-              onClick={handleCheckout}
-              disabled={isCheckingOut || cartItems.length === 0}
-            >
-              {isCheckingOut ? 'Processing...' : 'Checkout'}
-            </Button>
+        )}
+      </div>
+      
+      {cartItems.length > 0 && (
+        <div className="border-t border-border p-4 space-y-3">
+          <div className="flex justify-between items-center font-medium">
+            <span>Subtotal</span>
+            <span>{formatPrice(totalPrice)}</span>
           </div>
-        </>
+          <Button 
+            className="w-full h-12 text-base" 
+            onClick={handleCheckout}
+            disabled={isCheckingOut || cartItems.length === 0}
+          >
+            {isCheckingOut ? 'Processing...' : 'Checkout'}
+          </Button>
+        </div>
       )}
     </div>
   );

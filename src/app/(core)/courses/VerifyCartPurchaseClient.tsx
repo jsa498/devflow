@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { verifyPurchase } from '@/app/actions/verifyPurchase';
 import { toast } from 'sonner';
+import { useCart } from '@/components/shared/cart-context';
 
 export function VerifyCartPurchaseClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationAttempted, setVerificationAttempted] = useState(false);
+  const { clearCart } = useCart(); // Access cart context to clear cart after successful purchase
 
   useEffect(() => {
     // Check for success flag and session_id parameters
@@ -28,6 +31,12 @@ export function VerifyCartPurchaseClient() {
             // Show toast only on initial successful verification, not if already verified
             if (result.message && result.message !== 'Purchase already verified.') {
               toast.success(result.message || 'Course purchases successfully verified!');
+              // Clear cart after successful purchase
+              clearCart();
+              // Redirect to dashboard after a short delay
+              setTimeout(() => {
+                router.push('/dashboard');
+              }, 1500);
             }
             // Revalidation happens server-side in the action
           } else {
@@ -45,7 +54,7 @@ export function VerifyCartPurchaseClient() {
     }
     // Only re-run if searchParams changes (e.g., navigation)
     // verificationAttempted ensures it runs only once per session ID presence
-  }, [searchParams, isVerifying, verificationAttempted]); 
+  }, [searchParams, isVerifying, verificationAttempted, clearCart, router]); 
 
   // This component doesn't render anything itself, it just runs the effect
   return null;

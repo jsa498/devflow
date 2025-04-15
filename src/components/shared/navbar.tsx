@@ -26,10 +26,28 @@ import { LogoutButton } from '@/components/logout-button'; // Import LogoutButto
 import { Badge } from '@/components/ui/badge'; // Import Badge for cart count
 import { useCart } from './cart-context'; // Import cart context
 import { CartDropdown } from './cart-dropdown'; // Import cart dropdown
+import { CartPopup } from './cart-popup'; // Import cart popup for mobile
 
 // Create a separate CartButton component that uses the cart context
 const CartButton = () => {
   const { cartCount, isCartOpen, setIsCartOpen } = useCart();
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detect if the user is on a mobile device
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768); // Consider width < 768px as mobile
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
   
   return (
     <div className="relative">
@@ -51,7 +69,12 @@ const CartButton = () => {
         )}
         <span className="sr-only">Shopping cart</span>
       </Button>
-      <CartDropdown />
+      
+      {/* Show appropriate cart UI based on device */}
+      {isMobile ? 
+        <CartPopup isOpen={isCartOpen} onOpenChange={setIsCartOpen} /> : 
+        <CartDropdown />
+      }
     </div>
   );
 };
@@ -60,43 +83,36 @@ const CartButton = () => {
 const NavbarWithCart = () => {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null); // Add user state
-  const [loadingUser, setLoadingUser] = useState(true); // Add loading state
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState<boolean>(true);
+  const { cartCount, setIsCartOpen } = useCart();
+  
+  const supabase = createClient();
 
-  // Fetch user session
   useEffect(() => {
-    const supabase = createClient();
-    let isMounted = true;
-
     async function getUserSession() {
       setLoadingUser(true);
       const { data, error } = await supabase.auth.getUser();
-      if (isMounted) {
-        if (error) {
-          console.error("Error fetching user:", error);
-          setUser(null);
-        } else {
-          setUser(data.user);
-        }
-        setLoadingUser(false);
+      if (error) {
+        console.error("Error fetching user:", error);
+        setUser(null);
+      } else {
+        setUser(data.user);
       }
+      setLoadingUser(false);
     }
 
     getUserSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (isMounted) {
-        setUser(session?.user ?? null);
-        // No need to set loading false here as getUserSession already does
-      }
+      setUser(session?.user ?? null);
     });
 
     return () => {
-      isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [supabase.auth]);
 
   // Close sheet when pathname changes (navigation occurs)
   useEffect(() => {
@@ -289,6 +305,25 @@ const NavbarWithCart = () => {
                       >
                         Programs
                       </Link>
+                      
+                      {/* Cart Link in Mobile Menu */}
+                      <button
+                        className={`flex items-center justify-between min-h-[44px] w-full px-3 rounded-lg text-base font-medium transition-all hover:bg-muted/50 active:bg-muted/80 text-foreground`}
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsCartOpen(true);
+                        }}
+                      >
+                        <div className="flex items-center">
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Cart
+                        </div>
+                        {cartCount > 0 && (
+                          <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0 text-[10px]">
+                            {cartCount}
+                          </Badge>
+                        )}
+                      </button>
                     </nav>
 
                     {/* Sign in / User Profile in Mobile Menu */}
