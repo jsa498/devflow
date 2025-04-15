@@ -145,6 +145,78 @@ export async function verifyPurchase(sessionId: string): Promise<VerifyResult> {
       revalidatePath('/dashboard'); // Also revalidate dashboard
       return { success: true, message: 'Course purchase verified.' };
     }
+    
+    // --- Process Cart Checkout --- 
+    else if (metadata.isCartCheckout === 'true') {
+      const courseIdsString = metadata.courseIds;
+      if (!courseIdsString) {
+        console.error(`[Verify Action] Missing courseIds in metadata for cart checkout session ${sessionId}`);
+        return { success: false, error: 'Required course information missing from purchase session.' };
+      }
+      
+      console.log(`[Verify Action] Processing cart checkout with courses: ${courseIdsString}`);
+      
+      try {
+        // Parse the JSON string containing course IDs
+        const courseIdList = JSON.parse(courseIdsString);
+        
+        if (!Array.isArray(courseIdList) || courseIdList.length === 0) {
+          console.error(`[Verify Action] Invalid or empty courseIds format in session ${sessionId}`);
+          return { success: false, error: 'No valid courses found to enroll in' };
+        }
+        
+        // Calculate price per course (divide total by number of courses)
+        const amountTotal = session.amount_total;
+        const pricePerCourse = amountTotal ? (amountTotal / courseIdList.length) / 100 : null;
+        
+        // Insert enrollment records for each course
+        const enrollments = [];
+        for (const courseId of courseIdList) {
+          console.log(`[Verify Action] Enrolling in course ${courseId}...`);
+          
+          const { data, error } = await supabase
+            .from('user_course_enrollments')
+            .insert({
+              user_id: userId,
+              course_id: courseId, 
+              stripe_checkout_session_id: sessionId,
+              price_paid: pricePerCourse,
+            })
+            .select()
+            .single();
+            
+          if (error) {
+            // Skip duplicates but log other errors
+            if (error.code === '23505') { // Postgres unique violation code
+              console.log(`[Verify Action] Course enrollment for ${courseId} already exists, skipping.`);
+              continue;
+            } else {
+              console.error(`[Verify Action] Error enrolling in course ${courseId}:`, error);
+            }
+          } else if (data) {
+            enrollments.push(data);
+          }
+        }
+        
+        // Clear the user's cart after successful purchase verification
+        await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', userId);
+        
+        // Revalidate relevant pages
+        revalidatePath('/courses');
+        revalidatePath('/dashboard');
+        
+        return { 
+          success: true, 
+          message: `Successfully enrolled in ${enrollments.length} courses.`
+        };
+      } catch (parseError) {
+        console.error(`[Verify Action] Error parsing courseIds in session ${sessionId}:`, parseError);
+        return { success: false, error: 'Failed to process cart courses' };
+      }
+    }
 
     // --- Fallback if metadata doesn't match --- 
     else {

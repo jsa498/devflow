@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Card, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { VerifyCartPurchaseClient } from './VerifyCartPurchaseClient';
 
 // Define the Course interface based on database schema
 interface Course {
@@ -43,6 +44,9 @@ export default async function CoursesPage() {
 
   return (
     <div className="bg-background min-h-screen">
+      {/* Verification component for cart checkouts */}
+      <VerifyCartPurchaseClient />
+      
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

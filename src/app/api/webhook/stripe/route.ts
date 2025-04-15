@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ received: true, error: 'Database processing error' }, { status: 200 });
         }
 
-      } else if (metadata?.courseId) {
+      } else if (metadata?.isCartCheckout === 'true' || metadata?.courseId) {
         // ... (Keep your course purchase logic exactly as it was) ...
         console.log(`Processing course purchase completion for Session ID: ${session.id}`);
         try {
