@@ -17,7 +17,7 @@ export function VerifyPurchaseClient() {
     if (sessionId && !isVerifying && !verificationAttempted) {
       setIsVerifying(true);
       setVerificationAttempted(true); // Mark as attempted immediately
-      console.log(`[VerifyClient] Found checkout session ID: ${sessionId}, attempting verification...`);
+      // console.log(`[VerifyClient] Found checkout session ID: ${sessionId}, attempting verification...`); // Removed this log
 
       verifyPurchase(sessionId)
         .then((result) => {

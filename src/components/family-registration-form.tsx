@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Plus, Minus, Loader2, User, Calendar, BookOpen } from 'lucide-react';
-import { addChildren, enrollChildrenInClasses, type ClassEnrollment, type SelectedSlot } from '@/app/api/actions/programs';
+import { type SelectedSlot } from '@/app/api/actions/programs';
 
 // Define the form schema
 const formSchema = z.object({
@@ -27,14 +27,23 @@ const formSchema = z.object({
         z.object({
           classType: z.enum(["punjabi", "math", "coding"]),
           classLevel: z.string(),
-          timeSlot: z.string(),
+          timeSlot: z.enum([
+            'sunday_beginner',
+            'sunday_advanced',
+            'saturday_math_grade1_5',
+            'saturday_math_grade6_8',
+            'saturday_math_grade9_plus',
+            'saturday_coding_beginner',
+            'saturday_coding_advanced'
+          ]),
         })
       ).optional(),
     })
   ).min(1, { message: "At least one child is required." }),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+// Export the type so it can be imported elsewhere
+export type FormValues = z.infer<typeof formSchema>;
 
 const classOptions = [
   // Punjabi Classes (Sunday)
@@ -68,7 +77,7 @@ const classOptions = [
 ];
 
 interface FamilyRegistrationFormProps {
-  onComplete: (childCount: number, extraClassCount: number, parentInfo: { name: string, phone: string }) => void;
+  onComplete: (formData: FormValues) => void;
 }
 
 export function FamilyRegistrationForm({ onComplete }: FamilyRegistrationFormProps) {
@@ -133,7 +142,7 @@ export function FamilyRegistrationForm({ onComplete }: FamilyRegistrationFormPro
         currentChild.classes.push({
           classType: classType as "punjabi" | "math" | "coding",
           classLevel,
-          timeSlot,
+          timeSlot: timeSlot as SelectedSlot,
         });
       }
     } else {
@@ -158,69 +167,14 @@ export function FamilyRegistrationForm({ onComplete }: FamilyRegistrationFormPro
   async function onSubmit(data: FormValues) {
     setError(null);
     setIsSubmitting(true);
-    
+
     try {
-      // Calculate the number of children and extra classes
-      const childCount = data.children.length;
-      
-      // Count classes per child and total extra classes
-      let extraClassCount = 0;
-      data.children.forEach(child => {
-        const childClassCount = child.classes?.length || 0;
-        if (childClassCount > 3) {
-          extraClassCount += childClassCount - 3;
-        }
-      });
-      
-      // Add children to database
-      const addChildrenResult = await addChildren(data.children);
-      
-      // Check for success and data presence before proceeding
-      if (!addChildrenResult.success || !addChildrenResult.data) {
-        throw new Error(addChildrenResult.error || "Failed to register children or retrieve their data.");
-      }
-      
-      // Store the validated child data
-      const registeredChildren = addChildrenResult.data; // Now registeredChildren is DbChild[]
-            
-      // Prepare enrollments from selected classes (Now safe to access addChildrenResult.data)
-      const enrollments: ClassEnrollment[] = [];
-      
-      // Map through children and their classes
-      data.children.forEach((child, childIndex) => {
-        // Use the validated data variable here
-        const childId = registeredChildren[childIndex].id; // Use registeredChildren instead of addChildrenResult.data
-        
-        if (child.classes && child.classes.length > 0) {
-          child.classes.forEach(cls => {
-            enrollments.push({
-              childId,
-              classType: cls.classType,
-              classLevel: cls.classLevel,
-              timeSlot: cls.timeSlot as SelectedSlot,
-            });
-          });
-        }
-      });
-      
-      // Save enrollments if there are any
-      if (enrollments.length > 0) {
-        const enrollResult = await enrollChildrenInClasses(enrollments);
-        
-        if (!enrollResult.success) {
-          throw new Error(enrollResult.error || "Failed to enroll in classes");
-        }
-      }
-      
-      // Call the onComplete function with the counts and parent info
-      onComplete(childCount, extraClassCount, {
-        name: data.parentInfo.name,
-        phone: data.parentInfo.phone
-      });
-      
+      // Call the onComplete function with the full form data
+      onComplete(data);
+
     } catch (error: unknown) {
-      console.error("Error submitting family registration:", error);
-      setError((error instanceof Error ? error.message : null) || "An unexpected error occurred");
+      console.error("Error submitting family registration form (actions removed):", error);
+      setError((error instanceof Error ? error.message : null) || "An unexpected error occurred during form processing");
     } finally {
       setIsSubmitting(false);
     }

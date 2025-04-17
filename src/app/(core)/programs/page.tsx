@@ -18,6 +18,7 @@ import { createProgramCheckoutSession } from '@/app/api/actions/programs';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createClient } from '@/lib/supabase/client';
 import { FamilyRegistrationForm } from '@/components/family-registration-form';
+import { type FormValues as FamilyRegistrationFormValues } from '@/components/family-registration-form'; // Import the type
 
 // Define types for clarity
 type BillingCycle = 'monthly' | 'yearly';
@@ -41,10 +42,11 @@ export default function ProgramsPage() {
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
   const [isPending, startTransition] = useTransition();
   
-  // New state for registration
-  const [childCount, setChildCount] = useState(0);
-  const [extraClassCount, setExtraClassCount] = useState(0);
-  const [parentInfo, setParentInfo] = useState<{ name: string, phone: string } | null>(null);
+  // New state for registration - replaced counts with full form data
+  // const [childCount, setChildCount] = useState(0);
+  // const [extraClassCount, setExtraClassCount] = useState(0);
+  // const [parentInfo, setParentInfo] = useState<{ name: string, phone: string } | null>(null);
+  const [registrationData, setRegistrationData] = useState<FamilyRegistrationFormValues | null>(null);
   const [registrationStep, setRegistrationStep] = useState<'family' | 'checkout'>('family');
 
   const isYearly = planType === 'yearly';
@@ -91,29 +93,42 @@ export default function ProgramsPage() {
     setErrorMessage(null);
     setRegistrationStep('family');
     setIsRegistrationDialogOpen(true);
+    setRegistrationData(null); // Reset data when opening dialog
   };
 
-  const handleFamilyRegistrationComplete = (childrenCount: number, classesCount: number, parentData: { name: string, phone: string }) => {
-    setChildCount(childrenCount);
-    setExtraClassCount(classesCount);
-    setParentInfo(parentData);
+  const handleFamilyRegistrationComplete = (formData: FamilyRegistrationFormValues) => {
+    // setChildCount(childrenCount);
+    // setExtraClassCount(classesCount);
+    // setParentInfo(parentData);
+    setRegistrationData(formData);
     setRegistrationStep('checkout');
   };
 
   const handleProceedToCheckout = () => {
     setErrorMessage(null);
 
+    // Ensure registrationData exists before proceeding
+    if (!registrationData) {
+      setErrorMessage("Missing registration details. Please complete the form again.");
+      setRegistrationStep('family'); // Go back to form step
+      return;
+    }
+
     startTransition(async () => {
-      // For family subscriptions, use a generic slot for tracking
+      // For family subscriptions, use a generic slot for tracking - this might need review later
+      // If specific classes matter for the *program* itself, this might need adjustment.
+      // But for now, keeping it as is.
       const selectedSlot: SelectedSlot = 'sunday_beginner';
-      
+
       const result = await createProgramCheckoutSession(
         'Learn & Lead', // Program Name
-        selectedSlot, 
+        selectedSlot,
         planType,
-        childCount,
-        extraClassCount,
-        parentInfo || undefined
+        // Pass detailed child data instead of counts
+        // childCount,
+        // extraClassCount,
+        registrationData.children, // Pass the children array
+        registrationData.parentInfo // Pass parent info object
       );
 
       if (!result.success || !result.url) {
@@ -247,70 +262,55 @@ export default function ProgramsPage() {
         <DialogContent className={`max-h-[90vh] overflow-y-auto p-6 ${registrationStep === 'family' ? "sm:max-w-5xl" : "sm:max-w-md"}`}>
           <DialogHeader className="p-6">
             <DialogTitle>
-              {registrationStep === 'family' 
-                ? 'Registration Form'
-                : 'Confirm Your Subscription'}
+              {registrationStep === 'family'
+                ? 'Family Registration'
+                : 'Confirm & Checkout'}
             </DialogTitle>
             <DialogDescription>
               {registrationStep === 'family'
-                ? ''
-                : `You are registering ${childCount} children with the ${planType} plan.`}
+                ? 'Please provide your information and add details for each child enrolling.'
+                : `Review your ${planType} subscription details below for the Learn & Lead program.`}
             </DialogDescription>
           </DialogHeader>
           
-          {registrationStep === 'family' ? (
-            <FamilyRegistrationForm
-              onComplete={handleFamilyRegistrationComplete}
-            />
-          ) : (
-            <div className="py-4">
-              <div className="space-y-4">
-                {/* Summary of registration */}
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Base Subscription ({planType})</span>
-                        <span>${isYearly ? YEARLY_PRICE_PER_MONTH.toFixed(0) : MONTHLY_PRICE}/month</span>
-                      </div>
-                      
-                      {childCount > 2 && (
-                        <div className="flex justify-between text-amber-600">
-                          <span>Additional Children Fee ({childCount - 2} children)</span>
-                          <span>+${(childCount - 2) * 20}/month</span>
-                        </div>
-                      )}
-                      
-                      {extraClassCount > 0 && (
-                        <div className="flex justify-between text-amber-600">
-                          <span>Additional Classes Fee ({extraClassCount} classes)</span>
-                          <span>+${extraClassCount * 50}/month</span>
-                        </div>
-                      )}
-                      
-                      <div className="border-t pt-2 font-medium flex justify-between">
-                        <span>Total</span>
-                        <span>
-                          ${
-                            (isYearly ? YEARLY_PRICE_PER_MONTH : MONTHLY_PRICE) + 
-                            (childCount > 2 ? (childCount - 2) * 20 : 0) + 
-                            (extraClassCount * 50)
-                          }/month
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Error Message */}
-                {errorMessage && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{errorMessage}</AlertDescription>
-                  </Alert>
-                )}
-              </div>
+          {registrationStep === 'family' && (
+            <FamilyRegistrationForm onComplete={handleFamilyRegistrationComplete} />
+          )}
+
+          {registrationStep === 'checkout' && registrationData && (
+            <div className="p-6 pt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Subscription Summary</CardTitle>
+                  <CardDescription>You are enrolling in the Learn & Lead program.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p><strong>Billing Cycle:</strong> {planType === 'monthly' ? 'Monthly' : 'Yearly'}</p>
+                    {/* Display calculated price based on planType */}
+                    <p><strong>Base Price:</strong> ${isYearly ? YEARLY_PRICE_PER_MONTH.toFixed(0) : MONTHLY_PRICE}/month</p>
+                    {/* TODO: Display additional fees if needed based on registrationData */} 
+                  </div>
+                  <div>
+                    <p><strong>Parent:</strong> {registrationData.parentInfo.name} ({registrationData.parentInfo.phone})</p>
+                    <p><strong>Children Enrolling:</strong></p>
+                    <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                      {/* Explicitly type the parameters based on FormValues['children'][number] */}
+                      {registrationData.children.map((child: FamilyRegistrationFormValues['children'][number], index: number) => (
+                        <li key={index}>{child.name} (Age: {child.age})</li>
+                      ))}
+                    </ul>
+                    {/* TODO: Optionally display selected classes */} 
+                  </div>
+                  {errorMessage && (
+                    <Alert variant="destructive" className="mt-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{errorMessage}</AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
               
               <DialogFooter className="mt-6">
                 <Button

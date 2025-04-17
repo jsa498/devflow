@@ -5,8 +5,15 @@ import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { BookOpen, CalendarDays } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { BookOpen, CalendarDays, Users } from 'lucide-react';
 import { VerifyPurchaseClient } from './VerifyPurchaseClient';
+import { getChildEnrollments, type SelectedSlot } from '@/app/api/actions/programs';
 
 export const revalidate = 0; // Ensure fresh data on each visit
 
@@ -24,25 +31,62 @@ interface CourseType {
 interface ProgramEnrollmentType {
   id: string;
   program_name: string;
-  selected_slot: string; // e.g., 'sunday_beginner', 'sunday_advanced'
+  selected_slot: string; // This might become less relevant if we show per-child schedule
   status: string;
   billing_cycle: string;
 }
+
+// Define types matching the getChildEnrollments action return structure
+type DbEnrollment = {
+  id: string;
+  child_id: string;
+  class_type: string;
+  class_level: string;
+  time_slot: string; // Use SelectedSlot type for better type safety here?
+  created_at: string;
+  updated_at: string;
+};
+
+type ChildWithEnrollments = {
+  id: string;
+  user_id: string;
+  name: string;
+  age: number;
+  created_at: string;
+  updated_at: string;
+  enrollments: DbEnrollment[];
+};
 
 // For TypeScript's type checking purposes
 type CourseEnrollmentResponse = {
   courses: CourseType | unknown[] | null;
 };
 
-// Helper function to format schedule slot
+// Expanded helper function to format schedule slot
 const formatScheduleSlot = (slot: string): string => {
-  switch (slot) {
+  // Ensure slot is treated as SelectedSlot type if possible, or handle string input
+  const safeSlot = slot as SelectedSlot; 
+  switch (safeSlot) {
+    // Punjabi
     case 'sunday_beginner':
-      return 'Sundays 10:00 AM - 11:30 AM (Beginner Group)';
+      return 'Punjabi/Gurmukhi: Sundays 10:00 AM - 11:30 AM (Beginner)';
     case 'sunday_advanced':
-      return 'Sundays 11:30 AM - 1:00 PM (Mid/Advanced Group)';
+      return 'Punjabi/Gurmukhi: Sundays 11:30 AM - 1:00 PM (Mid/Advanced)';
+    // Math
+    case 'saturday_math_grade1_5':
+      return 'Math: Saturdays 11:00 AM - 12:00 PM (Grade 1-5)';
+    case 'saturday_math_grade6_8':
+      return 'Math: Saturdays 12:30 PM - 1:30 PM (Grade 6-8)';
+    case 'saturday_math_grade9_plus':
+      return 'Math: Saturdays 2:00 PM - 3:00 PM (Grade 9+)';
+    // Coding
+    case 'saturday_coding_beginner':
+      return 'Coding: Saturdays 4:00 PM - 5:00 PM (Beginner)';
+    case 'saturday_coding_advanced':
+      return 'Coding: Saturdays 6:00 PM - 7:00 PM (Mid/Advanced)';
     default:
-      return 'Schedule details unavailable';
+      console.warn(`Unknown schedule slot encountered: ${slot}`); // Log unknown slots
+      return `Unknown Class Schedule (${slot})`;
   }
 };
 
@@ -72,18 +116,26 @@ export default async function DashboardPage() {
     `)
     .eq('user_id', user.id);
 
-  // 4. Fetch active program enrollment (parallel fetch)
+  // 4. Fetch active program enrollment (parallel fetch) - Still useful to know if they *are* enrolled
   const fetchProgramEnrollment = supabase
     .from('program_enrollments')
-    .select('id, program_name, selected_slot, status, billing_cycle')
+    .select('id, program_name, selected_slot, status, billing_cycle') // Keep selection for now
     .eq('user_id', user.id)
     .eq('status', 'active') // Only fetch active enrollments
     .maybeSingle(); // Expecting zero or one active enrollment
 
+  // 5. Fetch child enrollments (parallel fetch) - New fetch
+  const fetchChildEnrollments = getChildEnrollments();
+
   // Execute fetches concurrently
-  const [courseEnrollmentResult, programEnrollmentResult] = await Promise.all([
+  const [
+    courseEnrollmentResult, 
+    programEnrollmentResult,
+    childEnrollmentsResult // Add result for child enrollments
+  ] = await Promise.all([
     fetchCourses,
     fetchProgramEnrollment,
+    fetchChildEnrollments, // Add the fetch promise
   ]);
 
   // Handle course enrollment errors
@@ -96,6 +148,12 @@ export default async function DashboardPage() {
   // Handle program enrollment errors (excluding not found)
   if (programEnrollmentResult.error && programEnrollmentResult.status !== 406) { // 406 is expected for maybeSingle() when no row found
     console.error('Error fetching program enrollment:', programEnrollmentResult.error);
+  }
+
+  // Handle child enrollment errors
+  if (!childEnrollmentsResult.success) {
+    console.error('Error fetching child enrollments:', childEnrollmentsResult.error);
+    // Decide how to handle this - show an error message?
   }
 
   // Extract courses from the enrollment data
@@ -117,36 +175,80 @@ export default async function DashboardPage() {
     });
   }
 
-  // Get program enrollment data
+  // Get program enrollment data (still useful to know if they are enrolled at all)
   const activeProgramEnrollment = programEnrollmentResult.data as ProgramEnrollmentType | null;
+  // Get child enrollment data
+  const childrenWithSchedules = childEnrollmentsResult.success ? childEnrollmentsResult.data as ChildWithEnrollments[] : [];
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Render the client component - it doesn't display anything visually */}
       <VerifyPurchaseClient /> 
       
-      {/* Program Enrollment Section */}
-      {activeProgramEnrollment && (
+      {/* Program Enrollment Section - Modified */}
+      {/* Show this section if the user has an active program enrollment OR if there are children with schedules */}
+      {(activeProgramEnrollment || (childrenWithSchedules && childrenWithSchedules.length > 0)) && (
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4">My Program</h2>
-          <Card className="bg-gradient-to-r from-primary/10 to-background border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                {activeProgramEnrollment.program_name} Schedule
-              </CardTitle>
-              <CardDescription>Your upcoming class time.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-medium">
-                {formatScheduleSlot(activeProgramEnrollment.selected_slot)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Billing: {activeProgramEnrollment.billing_cycle === 'monthly' ? 'Monthly' : 'Yearly'}
-              </p>
-              {/* TODO: Add link to manage subscription in Stripe customer portal */}
-            </CardContent>
-          </Card>
+          
+          {/* Error fetching child enrollments */}
+          {!childEnrollmentsResult.success && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error Loading Schedules</AlertTitle>
+              <AlertDescription>
+                Could not load your children&apos;s class schedules. Error: {childEnrollmentsResult.error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Display schedules if successfully fetched */}
+          {childEnrollmentsResult.success && childrenWithSchedules && childrenWithSchedules.length > 0 ? (
+            <Card> 
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" /> 
+                  <h3 className="font-bold">Schedule</h3>
+                </CardTitle>
+                <CardDescription>Class schedule for your registered children.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="multiple" className="w-full">
+                  {childrenWithSchedules.map((child) => (
+                    <AccordionItem key={child.id} value={child.id}>
+                      <AccordionTrigger className="text-lg font-medium">{child.name}</AccordionTrigger>
+                      <AccordionContent>
+                        {child.enrollments && child.enrollments.length > 0 ? (
+                          <ul className="space-y-2 pt-2">
+                            {child.enrollments.map((enrollment) => (
+                              <li key={enrollment.id} className="text-sm flex items-center gap-2">
+                                <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span>{formatScheduleSlot(enrollment.time_slot)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-muted-foreground pt-2">No classes scheduled for {child.name}.</p>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
+          ) : childEnrollmentsResult.success ? ( 
+             // Successfully fetched but no children/schedules
+             <Card className="bg-muted/30">
+               <CardContent className="pt-6">
+                 <p className="text-muted-foreground text-center">No children are currently registered in the program, or no classes are scheduled.</p>
+                 {/* Optionally add a link back to registration/programs page */}
+                 <div className="text-center mt-4">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/programs">View Programs</Link>
+                    </Button>
+                 </div>
+               </CardContent>
+             </Card>
+          ) : null /* Error handled above */ }
         </section>
       )}
 
