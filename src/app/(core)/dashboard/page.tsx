@@ -14,18 +14,22 @@ import {
 import { BookOpen, CalendarDays, Users } from 'lucide-react';
 import { VerifyPurchaseClient } from './VerifyPurchaseClient';
 import { getChildEnrollments, type SelectedSlot } from '@/app/api/actions/programs';
+import type { ChildWithEnrollments } from '@/types/enrollment';
+import type { CourseType, CourseEnrollmentResponse } from '@/types/course';
+import { getAllUpcomingOccurrences } from '@/utils/scheduleUtils';
+import { UpcomingClass } from './UpcomingClass';
 
 export const revalidate = 0; // Ensure fresh data on each visit
 
 // Define the course type
-interface CourseType {
-  id: string;
-  title: string;
-  slug: string;
-  description: string | null;
-  thumbnail_image_url: string | null;
-  image_url: string | null;
-}
+// interface CourseType {
+//   id: string;
+//   title: string;
+//   slug: string;
+//   description: string | null;
+//   thumbnail_image_url: string | null;
+//   image_url: string | null;
+// }
 
 // Define the program enrollment type
 interface ProgramEnrollmentType {
@@ -35,32 +39,6 @@ interface ProgramEnrollmentType {
   status: string;
   billing_cycle: string;
 }
-
-// Define types matching the getChildEnrollments action return structure
-type DbEnrollment = {
-  id: string;
-  child_id: string;
-  class_type: string;
-  class_level: string;
-  time_slot: string; // Use SelectedSlot type for better type safety here?
-  created_at: string;
-  updated_at: string;
-};
-
-type ChildWithEnrollments = {
-  id: string;
-  user_id: string;
-  name: string;
-  age: number;
-  created_at: string;
-  updated_at: string;
-  enrollments: DbEnrollment[];
-};
-
-// For TypeScript's type checking purposes
-type CourseEnrollmentResponse = {
-  courses: CourseType | unknown[] | null;
-};
 
 // Expanded helper function to format schedule slot
 const formatScheduleSlot = (slot: string): string => {
@@ -159,16 +137,19 @@ export default async function DashboardPage() {
   // Extract courses from the enrollment data
   const validCourses: CourseType[] = [];
   if (courseEnrollmentResult.data && courseEnrollmentResult.data.length > 0) {
-    const typedEnrollments = courseEnrollmentResult.data as CourseEnrollmentResponse[];
+    // Ensure correct type assertion for the initial data structure if needed
+    const typedEnrollments = courseEnrollmentResult.data as CourseEnrollmentResponse[]; // Assuming data is an array of these
     typedEnrollments.forEach((enrollment) => {
       if (enrollment.courses) {
         if (Array.isArray(enrollment.courses)) {
-          enrollment.courses.forEach((courseData) => {
-            const course = courseData as CourseType;
-            if (course && course.id) validCourses.push(course);
+          // Explicitly type courseData here
+          enrollment.courses.forEach((courseData: CourseType) => { 
+            // Type assertion `as CourseType` might not be needed if courseData is correctly typed
+            if (courseData && courseData.id) validCourses.push(courseData); 
           });
         } else {
-          const course = enrollment.courses as CourseType;
+          // Type assertion needed here as enrollment.courses could be a single CourseType
+          const course = enrollment.courses as CourseType; 
           if (course && course.id) validCourses.push(course);
         }
       }
@@ -179,6 +160,10 @@ export default async function DashboardPage() {
   const activeProgramEnrollment = programEnrollmentResult.data as ProgramEnrollmentType | null;
   // Get child enrollment data
   const childrenWithSchedules = childEnrollmentsResult.success ? childEnrollmentsResult.data as ChildWithEnrollments[] : [];
+
+  // Calculate upcoming occurrences
+  const now = new Date();
+  const sortedOccurrences = getAllUpcomingOccurrences(childrenWithSchedules, now);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -203,38 +188,53 @@ export default async function DashboardPage() {
 
           {/* Display schedules if successfully fetched */}
           {childEnrollmentsResult.success && childrenWithSchedules && childrenWithSchedules.length > 0 ? (
-            <Card> 
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" /> 
-                  <h3 className="font-bold">Schedule</h3>
-                </CardTitle>
-                <CardDescription>Class schedule for your registered children.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="multiple" className="w-full">
-                  {childrenWithSchedules.map((child) => (
-                    <AccordionItem key={child.id} value={child.id}>
-                      <AccordionTrigger className="text-lg font-medium">{child.name}</AccordionTrigger>
-                      <AccordionContent>
-                        {child.enrollments && child.enrollments.length > 0 ? (
-                          <ul className="space-y-2 pt-2">
-                            {child.enrollments.map((enrollment) => (
-                              <li key={enrollment.id} className="text-sm flex items-center gap-2">
-                                <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <span>{formatScheduleSlot(enrollment.time_slot)}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-sm text-muted-foreground pt-2">No classes scheduled for {child.name}.</p>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card 1: Full Schedule */}
+              <Card> 
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" /> 
+                    Full Schedule
+                  </CardTitle>
+                  <CardDescription>Class schedule for your registered children.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Schedule Accordion */}
+                  <Accordion type="multiple" className="w-full">
+                    {childrenWithSchedules.map((child) => (
+                      <AccordionItem key={child.id} value={child.id}>
+                        <AccordionTrigger className="text-lg font-medium">{child.name}</AccordionTrigger>
+                        <AccordionContent>
+                          {child.enrollments && child.enrollments.length > 0 ? (
+                            <ul className="space-y-2 pt-2">
+                              {child.enrollments.map((enrollment) => (
+                                <li key={enrollment.id} className="text-sm flex items-center gap-2">
+                                  <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                  <span>{formatScheduleSlot(enrollment.time_slot)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-muted-foreground pt-2">No classes scheduled for {child.name}.</p>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </CardContent>
+              </Card>
+
+              {/* Element 2: Upcoming Class or its empty state card */}
+              {sortedOccurrences.length > 0 ? (
+                  <UpcomingClass upcomingClasses={sortedOccurrences} />
+              ) : (
+                  <Card className="bg-muted/30 flex items-center justify-center h-full">
+                    <CardContent className="pt-6 text-center text-muted-foreground">
+                        <p>No upcoming class sessions found.</p>
+                    </CardContent>
+                  </Card>
+              )}
+            </div>
           ) : childEnrollmentsResult.success ? ( 
              // Successfully fetched but no children/schedules
              <Card className="bg-muted/30">
