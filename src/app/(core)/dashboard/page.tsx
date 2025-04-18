@@ -226,7 +226,10 @@ export default async function DashboardPage() {
 
               {/* Element 2: Upcoming Class or its empty state card */}
               {sortedOccurrences.length > 0 ? (
-                  <UpcomingClass upcomingClasses={sortedOccurrences} />
+                  <UpcomingClass 
+                    upcomingClasses={sortedOccurrences} 
+                    enrolledChildren={childrenWithSchedules} // Renamed from children
+                  />
               ) : (
                   <Card className="bg-muted/30 flex items-center justify-center h-full">
                     <CardContent className="pt-6 text-center text-muted-foreground">
@@ -265,15 +268,6 @@ export default async function DashboardPage() {
                 </AlertDescription>
             </Alert>
         )}
-
-        {/* Content Under Development Alert - Keep this? */}
-        <Alert className="mb-8 bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-300">
-          <BookOpen className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
-          <AlertTitle className="font-semibold text-blue-900 dark:text-blue-200">Content Under Development</AlertTitle>
-          <AlertDescription>
-            Thank you for your purchase! Course content is currently being developed and will be available soon. Stay tuned!
-          </AlertDescription>
-        </Alert>
 
         {validCourses && validCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

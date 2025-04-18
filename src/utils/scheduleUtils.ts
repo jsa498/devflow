@@ -74,6 +74,7 @@ export interface UpcomingOccurrence {
   childName: string;
   description: string;
   slot: string; // Keep original slot for potential filtering/keying
+  childId: string; // Added childId
 }
 
 /**
@@ -105,6 +106,7 @@ export function getAllUpcomingOccurrences(
             childName: child.name,
             description: details?.description || `Unknown Class (${enrollment.time_slot})`,
             slot: enrollment.time_slot,
+            childId: child.id, // Added childId population
           });
         }
       });
