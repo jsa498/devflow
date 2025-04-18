@@ -146,3 +146,48 @@
     background-position: 0% center;
   }
 }
+
+/* Lesson content styling */
+.lesson-content {
+  @apply text-foreground/90;
+}
+
+.lesson-markdown {
+  @apply space-y-4;
+}
+
+.lesson-markdown h1,
+.lesson-markdown h2,
+.lesson-markdown h3 {
+  @apply relative;
+}
+
+.lesson-markdown h2::before {
+  content: "";
+  @apply absolute -left-3 top-0 bottom-0 w-1 bg-primary/60 rounded-full my-1;
+}
+
+.lesson-markdown ul {
+  @apply space-y-2;
+}
+
+.lesson-markdown ul li {
+  @apply flex items-start;
+}
+
+.lesson-markdown ul li::before {
+  content: "•";
+  @apply text-primary mr-2 text-lg;
+}
+
+.lesson-markdown pre {
+  @apply border border-border/50;
+}
+
+.lesson-markdown blockquote {
+  @apply italic text-foreground/80;
+}
+
+.lesson-markdown code:not(pre code) {
+  @apply text-primary-foreground bg-primary/90 px-1.5 py-0.5 rounded-md text-sm font-mono;
+}

@@ -157,10 +157,10 @@ export default async function LessonPage({ params: paramsPromise }: LessonPagePr
   const { prevLesson, nextLesson } = findAdjacentLessons(modules, lessonId);
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-background/50">
       <div className="flex flex-1 flex-col sm:gap-4 sm:py-4 sm:pl-14 md:pl-0">
         {/* Mobile Navigation Trigger (Sheet) */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur-sm px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:hidden">
           <span className="font-semibold">{course.title}</span>
           <Sheet>
             <SheetTrigger asChild>
@@ -173,8 +173,11 @@ export default async function LessonPage({ params: paramsPromise }: LessonPagePr
               <SheetHeader className="mb-4">
                 <SheetTitle>Course Content</SheetTitle>
               </SheetHeader>
-              {/* Pass current lesson ID for active state styling later */}
-              <CourseSidebar modules={modules} courseSlug={courseSlug} />
+              <CourseSidebar 
+                modules={modules} 
+                courseSlug={courseSlug} 
+                currentLessonId={lessonId}
+              />
             </SheetContent>
           </Sheet>
         </header>
@@ -182,40 +185,58 @@ export default async function LessonPage({ params: paramsPromise }: LessonPagePr
         <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 md:flex md:flex-row">
           {/* Desktop Sidebar */}
           <div className="hidden md:block md:w-64 lg:w-72 xl:w-80 border-r pr-4 h-full">
-            <h2 className="text-xl font-semibold mb-4 sticky top-[calc(theme(spacing.14)+1px)] pt-4 bg-background">
-              Course Content
-            </h2>
-            {/* Pass current lesson ID for active state styling later */}
-            <CourseSidebar modules={modules} courseSlug={courseSlug} className="sticky top-[calc(theme(spacing.14)+1px+theme(spacing.10))]" />
+            <div className="sticky top-[calc(theme(spacing.14)+1px)] pt-4 bg-background">
+              <h2 className="text-xl font-semibold mb-2">{course.title}</h2>
+              <div className="h-1 w-16 bg-primary/40 rounded-full mb-4"></div>
+              <h3 className="text-base font-medium mb-4">Course Content</h3>
+            </div>
+            <CourseSidebar 
+              modules={modules} 
+              courseSlug={courseSlug} 
+              currentLessonId={lessonId}
+              className="sticky top-[calc(theme(spacing.14)+1px+theme(spacing.24))]" 
+            />
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 py-6">
-            <h1 className="text-3xl font-bold tracking-tight mb-6">{lesson.title}</h1>
+          <div className="flex-1 max-w-4xl mx-auto py-6">
+            <div className="bg-card shadow-sm rounded-lg p-6 mb-8">
+              <h1 className="text-3xl font-bold tracking-tight mb-2">{lesson.title}</h1>
+              <div className="h-1 w-20 bg-primary/70 rounded-full mb-6"></div>
 
-            {/* Lesson Content */}
-            <div className="mb-8">
-              <MarkdownRenderer markdown={lesson.content_markdown || "No content available for this lesson."} />
+              {/* Lesson Content */}
+              <div className="lesson-content">
+                <MarkdownRenderer 
+                  markdown={lesson.content_markdown || "No content available for this lesson."} 
+                  className="lesson-markdown"
+                />
+              </div>
             </div>
 
             {/* Prev/Next Navigation */}
-            <div className="flex justify-between items-center mt-10 pt-6 border-t">
+            <div className="flex justify-between items-center mt-8 pt-4 border-t">
               <div>
                 {prevLesson && (
-                  <Button variant="outline" asChild>
+                  <Button variant="outline" asChild className="flex items-center gap-2 hover:bg-muted/80 transition-all">
                     <Link href={`/learn/${courseSlug}/lessons/${prevLesson.id}`}>
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Previous: {prevLesson.title}
+                      <ArrowLeft className="h-4 w-4" />
+                      <span>
+                        <span className="text-xs block text-muted-foreground">Previous Lesson</span>
+                        {prevLesson.title}
+                      </span>
                     </Link>
                   </Button>
                 )}
               </div>
               <div>
                 {nextLesson && (
-                  <Button variant="outline" asChild>
+                  <Button variant="outline" asChild className="flex items-center gap-2 hover:bg-muted/80 transition-all">
                     <Link href={`/learn/${courseSlug}/lessons/${nextLesson.id}`}>
-                      Next: {nextLesson.title}
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <span>
+                        <span className="text-xs block text-muted-foreground">Next Lesson</span>
+                        {nextLesson.title}
+                      </span>
+                      <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
                 )}
