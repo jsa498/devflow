@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { BookOpen, CalendarDays, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, Users, ArrowRight } from 'lucide-react';
 import { VerifyPurchaseClient } from './VerifyPurchaseClient';
 import { getChildEnrollments, type SelectedSlot } from '@/app/api/actions/programs';
 import type { ChildWithEnrollments } from '@/types/enrollment';
@@ -272,37 +272,46 @@ export default async function DashboardPage() {
         {validCourses && validCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {validCourses.map((course) => (
-              <Card key={course.id} className="group overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
-                <div className="relative w-full h-48 bg-muted">
-                  {course.thumbnail_image_url || course.image_url ? (
-                    <Image
-                      src={course.thumbnail_image_url || course.image_url || ''}
-                      alt={course.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-muted group-hover:bg-muted/80 transition-colors">
-                      <BookOpen className="h-12 w-12 text-muted-foreground/50" />
-                    </div>
-                  )}
-                </div>
-                <CardHeader className="flex-grow">
-                  <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
-                    <Link href={`/learn/${course.slug}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
-                      {course.title}
-                    </Link>
-                  </CardTitle>
-                  <div className="mt-4">
-                    <Button asChild size="sm" className="w-full">
-                      <Link href={`/learn/${course.slug}`}>
-                        Start Course
-                      </Link>
-                    </Button>
+              <div key={course.id} className="p-1 h-full"> 
+                <Card 
+                  className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 h-full flex flex-col p-0" 
+                >
+                  <div className="relative w-full h-52 bg-black overflow-hidden"> 
+                    {course.thumbnail_image_url || course.image_url ? (
+                      <Image
+                        src={course.thumbnail_image_url || course.image_url || ''}
+                        alt={course.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-muted group-hover:bg-muted/80 transition-colors"> 
+                        <BookOpen className="h-12 w-12 text-muted-foreground/50" />
+                      </div>
+                    )}
                   </div>
-                </CardHeader>
-              </Card>
+                  <CardContent className="flex flex-col flex-grow p-6"> 
+                    <CardTitle className="text-xl font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                      <Link href={`/learn/${course.slug}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded hover:underline">
+                        {course.title}
+                      </Link>
+                    </CardTitle>
+                    {course.description && (
+                       <CardDescription className="text-sm text-muted-foreground mb-6 line-clamp-3 flex-grow">
+                         {course.description} 
+                       </CardDescription>
+                    )}
+                    <div className="mt-auto"> 
+                      <Button asChild variant="outline" size="sm" className="w-full sm:w-auto"> 
+                        <Link href={`/learn/${course.slug}`}>
+                          Start Course <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         ) : (
